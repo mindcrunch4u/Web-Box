@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+.outerwrap
+{
+	width: 100%; 
+	text-align: center;
+	padding-top: 5%;
+}
+.short
+{
+	display: inline-block; 
+	width: 40%;
+	text-align: left;
+}
+</style>
+<script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script> 
+	var lines=""
+	function hit_enter(){
+		if( event.key == 'Enter' ){
+			func_dec()
+		}
+	}
+	function func_dec(){
+		var raw_text_obj = document.getElementById("chat")
+		var aes_key = document.getElementById("key").value
+		if( aes_key.length < 1 ){
+			if( lines.length > 0 ){
+				raw_text_obj.value = ""
+				for(var i = 0;i < lines.length;i++){
+					if( lines[i].length > 0 ){
+						raw_text_obj.value = raw_text_obj.value + lines[i]
+					}
+					else{
+						raw_text_obj.value = raw_text_obj.value + "\n"
+					}
+				}
+			}
+			return
+		}
+		if( lines == "" ){
+			lines = document.getElementById('chat').innerHTML.split('\n')
+			for(var i = 0;i < lines.length;i++){
+				console.log(lines[i])
+			}
+		}
+		raw_text_obj.value = ""
+		for(var i = 0;i < lines.length;i++){
+			var clear_text = CryptoJS.AES.decrypt(lines[i], aes_key).toString(CryptoJS.enc.Utf8);
+			if( clear_text.length > 0 ){
+				raw_text_obj.value = raw_text_obj.value + clear_text
+			}
+			else if( lines[i].length > 0 ){
+				raw_text_obj.value = raw_text_obj.value + lines[i]
+			}
+			else{
+				raw_text_obj.value = raw_text_obj.value + "\n"
+			}
+		}
+	}
+</script>
+<div class="outerwrap">
+	<label for="key">Key: </label>
+	<input class="short" id="key" type="text" name="key" onkeydown="hit_enter()">  </input>
+	<br/>
+	<br/>
+	<textarea rows="20" class="short" id="chat">
+		{% if incoming_massage %}
+		{{ incoming_massage }}
+		{% else %}
+		<p> Ganz Leer </p>
+		{% endif %}
+	</textarea >
+	<p>
+	<a href={{ url_for('home') }}>  Go Back.  </a>
+	</p>
+</div>
+{% endblock content %}

@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+.outerwrap
+{
+	width: 100%; 
+	text-align: center;
+	padding-top: 5%;
+}
+.short
+{
+	display: inline-block; text-align: left;
+}
+.info
+{
+	display: inline-block; text-align: left;
+	outline: 2px dashed;
+	outline-offset: 8px;
+}
+</style>
+<script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+<script> 
+	function encrypt(){
+		var raw_text_obj = document.getElementById("content")
+		var aes_key = document.getElementById("key").value
+		if( raw_text_obj.value.length < 1 || aes_key.length < 1 ){
+			return
+		}
+		var crypted_text=CryptoJS.AES.encrypt( raw_text_obj.value , aes_key )
+		raw_text_obj.value = crypted_text
+	}
+	function show_keyfield(){
+		outline_yes = "2px dashed"
+		outline_no = "0px dashed"
+		outline_offset_yes = "5px"
+		outline_offset_no = "8px"
+
+		if( document.getElementById('content').value.length > 0 ){
+			document.getElementById('keyblock').style.outline=outline_yes
+			document.getElementById('keyblock').style.outlineOffset=outline_offset_yes
+
+			document.getElementById('info').style.outline=outline_no
+		}
+		else{
+			document.getElementById('keyblock').style.outline=outline_no
+
+			document.getElementById('info').style.outline=outline_yes
+			document.getElementById('info').style.outlineOffset=outline_offset_yes
+		}
+	}
+</script>
+<div class="outerwrap">
+	<form method="POST" action="/">
+		<div> {{ form.content(cols="55", rows="5") }} </div>
+		<p class="short"> {{ form.post_id.label }} {{ form.post_id() }} </p>
+		<br/>
+		<div> {{ form.submit }} </div>
+	</form>
+	<br/> <br/>
+
+
+	<div class="short" id="keyblock">
+		<label  for="key" id="key_label">Optional Key: </label>
+		<input  type="text" name="key" id="key">  </input> <br/>
+		<p style="text-align:center;">Posting</p>
+	</div> <br/>
+
+
+	<div class="info" id="info"> 
+		<p>Reading</p>
+	</div>
+	<script> show_keyfield() </script>
+</div>
+
+{% endblock content %}
