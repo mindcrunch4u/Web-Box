@@ -1,61 +1,124 @@
 from flask import render_template, escape
 from datetime import datetime
+import subprocess
+from subprocess import Popen, PIPE, STDOUT
 import os
-def Post_Id_Valid( post_id ):
+from threading import Thread
+from configuration import default_config, box_mode
+
+def is_post_id_valid( post_id ):
     if len(str(post_id)) < 1:
         return False
     return True
-#    if post_id == "testid" :
-#        return True
-#    else:
-#        return False
 
-def Append_To_Post( post_id, append_string ):
-    #append_string = str(datetime.now()) + "\n>-------------\n" + append_string  +  "\n-------------<\n"
-    MAIN_DIR=str(os.getcwd()) + "/" + "Posts"
-    POST_DIR=MAIN_DIR+"/"+ post_id
-    POST_FILE_PATH = POST_DIR+"/"+ "post_log"
-    if not os.path.isdir(MAIN_DIR):
-        print("[Urteil] Creating Posts Main Storage.")
-        os.makedirs(MAIN_DIR)
-    if not os.path.isdir(POST_DIR):
-        print("[Urteil] Creating Storage for Post: ", post_id)
+
+def append_to_post( post_id, append_string):
+    if default_config.mode == box_mode.message_box:
+        #append_string = str(datetime.now()) + "\n>-------------\n" + append_string  +  "\n-------------<\n"
+        parent_dir=str(os.getcwd()) + "/" + "Posts"
+        post_dir=parent_dir+"/"+ post_id
+        POST_FILE_PATH = post_dir+"/"+ "post_log"
+        if not os.path.isdir(parent_dir):
+            print("[Urteil] Creating Posts Main Storage.")
+            os.makedirs(parent_dir)
+        if not os.path.isdir(post_dir):
+            print("[Urteil] Creating Storage for Post: ", post_id)
+            try:
+                os.makedirs(post_dir)
+            except:
+                return False
+        if os.path.isdir(post_dir) and os.path.isdir(parent_dir):
+            post = open(POST_FILE_PATH,'a')
+            post.write("\n\n\n")
+            post.write( append_string )
+            post.close()
+        return True
+
+    else:
+        parent_dir=default_config.storage_path
+        post_dir=parent_dir+"/"+ post_id
+        temp_file_name="datablock"
+        post_temp_dir = post_id+"/"+ temp_file_name
+        if not os.path.isdir(parent_dir):
+            print("[*] Creating Posts Main Storage.")
+            try:
+                os.makedirs(parent_dir)
+            except:
+                return False;
+        if os.path.isdir(post_dir):
+            print("[-] Post exists")
+            return False;
+        if not os.path.isdir(post_dir):
+            print("[*] Creating Storage for Post: ", post_id)
+            try:
+                os.makedirs(post_dir)
+            except:
+                return False
+        if os.path.isdir(post_dir) and os.path.isdir(parent_dir) and not os.path.isdir(post_temp_dir):
+            try:
+                os.makedirs(post_temp_dir)
+            except:
+                return False
+        #execute_script( append_string, post_temp_dir );
+        thread = Thread(target = execute_script, args = (append_string, post_temp_dir ))
+        thread.start()
+        return True
+
+
+def execute_script( content, destination ):
+    script_path = default_config.ytdl_script_path
+    content = ' '.join(content.strip().splitlines())
+    process = Popen(["/usr/bin/bash", script_path, content, destination] , stdout=PIPE, stderr=STDOUT)
+    logfile_location = destination + "/../" + "description.txt"
+    with process.stdout:
+        log_subprocess_output(process.stdout, logfile_location)
+    exitcode = process.wait()
+
+
+def log_subprocess_output(pipe, logfile_location):
+    for line in iter(pipe.readline, b''): # b'\n'-separated lines
         try:
-            os.makedirs(POST_DIR)
+            decoded_line = line.decode()
         except:
-            return False
-    if os.path.isdir(POST_DIR) and os.path.isdir(MAIN_DIR):
-        post = open(POST_FILE_PATH,'a')
-        post.write("\n\n\n")
-        post.write( append_string )
+            decoded_line = str(line)
+        post = open(logfile_location, 'a+')
+        post.write( decoded_line )
         post.close()
-    return True
 
 
-def Fetch_Post( post_id ):
-    MAIN_DIR=str(os.getcwd()) + "/" + "Posts"
-    POST_DIR=MAIN_DIR+"/"+post_id
-    POST_FILE_PATH = POST_DIR+"/"+"post_log"
-    if os.path.isfile(POST_FILE_PATH):
-        post = open(POST_FILE_PATH,'r')
-        post_data = post.read()
-        return post_data
-    return None
+def fetch_post( post_id ):
+    if default_config.mode == box_mode.message_box:
+        parent_dir=default_config.storage_path + "/" + "Posts"
+        post_dir=parent_dir+"/"+post_id
+        post_file_path = post_dir+"/"+"post_log"
+        if os.path.isfile(post_file_path):
+            post = open(post_file_path,'r')
+            post_data = post.read()
+            return post_data
+        return None
+    else:
+        return "Visit subdirectory /storage"
 
-def Urteil(content, post_id):
-    if not Post_Id_Valid( post_id ):
-        print("[Urteil] Invalid Post Id.")
-        return render_template('invalid_id.html', title="Nope.")
+
+def handle_post(content, post_id):
+    if not is_post_id_valid( post_id ):
+        print("[!] Invalid Post Id.")
+        return render_template('invalid_id.html', title="Invalid ID")
 
     if len(content) == 0:
-        print("[Urteil] Received Empty Content.")
-        print("[Urteil] Providing Post to user.")
-        return render_template('display_msg.html', title="Log", incoming_massage=Fetch_Post(post_id))
+        # empty message gox means get content by ID
+        print("[*] Received Empty Content, Providing Post to User.")
+        return render_template('display_msg.html', title="Log", incoming_massage=fetch_post(post_id))
     else:
-        print("[Urteil] Content Provided.")
-        print("[Urteil] Check Post Dir: " + str(os.getcwd()))
-        print("[Urteil] Updating Post, ID:" + str(post_id))
-        if Append_To_Post( post_id, content ):
-            return render_template('posted.html', title="Posted")
+        # when both ID and content are provided, append to the original post
+        print("[*] Content Provided.")
+        print("[*] Updating Post, ID:" + str(post_id))
+        if default_config.mode == box_mode.message_box:
+            if append_to_post( post_id, content ):
+                return render_template('posted.html', title="Posted.")
+            else:
+                return render_template('posted_fail.html', title="Can\'t Post.")
         else:
-            return render_template('posted_fail.html', title="Can\'t Post")
+            # downloader mode
+            append_to_post(post_id, content)
+            return render_template('posted.html', title="Posted")

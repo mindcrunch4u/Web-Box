@@ -50,7 +50,7 @@
 	}
 </script>
 <div class="outerwrap">
-	<form method="POST" action="/">
+	<form method="POST" action="/{{html_web_path}}">
 		<div> {{ form.content(cols="55", rows="5") }} </div>
 		<p class="short"> {{ form.post_id.label }} {{ form.post_id() }} </p>
 		<br/>
@@ -58,17 +58,25 @@
 	</form>
 	<br/> <br/>
 
-
+    {% block keyfield %}
+    {% if mode_message_box %}
 	<div class="short" id="keyblock">
 		<label  for="key" id="key_label">Optional Key: </label>
 		<input  type="text" name="key" id="key">  </input> <br/>
-		<p style="text-align:center;">Posting</p>
+		<p style="text-align:center;">Posting Mode</p>
 	</div> <br/>
+    {% endif %}
+    {% endblock keyfield %}
 
 
+    {% block fetching_mode_field %}
+    {% if mode_message_box %}
 	<div class="info" id="info"> 
-		<p>Reading</p>
+		<p>Fetching Mode</p>
 	</div>
+    {% endif %}
+    {% endblock fetching_mode_field %}
+
 	<script> show_keyfield() </script>
 </div>
 
