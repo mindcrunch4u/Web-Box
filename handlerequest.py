@@ -38,7 +38,7 @@ def append_to_post( post_id, append_string):
         parent_dir=default_config.storage_path
         post_dir=parent_dir+"/"+ post_id
         temp_file_name="datablock"
-        post_temp_dir = post_id+"/"+ temp_file_name
+        post_temp_dir = post_dir+"/"+ temp_file_name
         if not os.path.isdir(parent_dir):
             print("[*] Creating Posts Main Storage.")
             try:
@@ -59,17 +59,22 @@ def append_to_post( post_id, append_string):
                 os.makedirs(post_temp_dir)
             except:
                 return False
-        #execute_script( append_string, post_temp_dir );
-        thread = Thread(target = execute_script, args = (append_string, post_temp_dir ))
+
+        use_zip_file = "use_zip_file"
+        if not default_config.ytdl_zip_file:
+            use_zip_file = ""
+
+        print("[*] Executing Script: {}, Args: {}".format(default_config.ytdl_script_path, [append_string, post_temp_dir, use_zip_file]))
+        thread = Thread(target = execute_script, args = (append_string, post_temp_dir, use_zip_file))
         thread.start()
         return True
 
 
-def execute_script( content, destination ):
+def execute_script( content, destination, use_zip_file ):
     script_path = default_config.ytdl_script_path
     content = ' '.join(content.strip().splitlines())
-    process = Popen(["/usr/bin/bash", script_path, content, destination] , stdout=PIPE, stderr=STDOUT)
-    logfile_location = destination + "/../" + "description.txt"
+    process = Popen(["/usr/bin/bash", script_path, content, destination, use_zip_file] , stdout=PIPE, stderr=STDOUT)
+    logfile_location = destination + "/../" + "log.txt"
     with process.stdout:
         log_subprocess_output(process.stdout, logfile_location)
     exitcode = process.wait()
@@ -97,7 +102,7 @@ def fetch_post( post_id ):
             return post_data
         return None
     else:
-        return "Visit subdirectory /storage"
+        return "Visit The Download Folder on the Server."
 
 
 def handle_post(content, post_id):
@@ -113,12 +118,7 @@ def handle_post(content, post_id):
         # when both ID and content are provided, append to the original post
         print("[*] Content Provided.")
         print("[*] Updating Post, ID:" + str(post_id))
-        if default_config.mode == box_mode.message_box:
-            if append_to_post( post_id, content ):
-                return render_template('posted.html', title="Posted.")
-            else:
-                return render_template('posted_fail.html', title="Can\'t Post.")
+        if append_to_post( post_id, content ):
+            return render_template('posted.html', title="Posted.")
         else:
-            # downloader mode
-            append_to_post(post_id, content)
-            return render_template('posted.html', title="Posted")
+            return render_template('posted_failed.html', title="Post Denied.")
