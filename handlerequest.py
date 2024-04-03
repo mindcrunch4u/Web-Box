@@ -15,9 +15,9 @@ def is_post_id_valid( post_id ):
 def append_to_post( post_id, append_string):
     if default_config.mode == box_mode.message_box:
         #append_string = str(datetime.now()) + "\n>-------------\n" + append_string  +  "\n-------------<\n"
-        parent_dir=str(os.getcwd()) + "/" + "Posts"
+        parent_dir=default_config.storage_path + "/" + "Posts"
         post_dir=parent_dir+"/"+ post_id
-        POST_FILE_PATH = post_dir+"/"+ "post_log"
+        post_file_path = post_dir+"/"+ "post_log"
         if not os.path.isdir(parent_dir):
             print("[Urteil] Creating Posts Main Storage.")
             os.makedirs(parent_dir)
@@ -28,7 +28,7 @@ def append_to_post( post_id, append_string):
             except:
                 return False
         if os.path.isdir(post_dir) and os.path.isdir(parent_dir):
-            post = open(POST_FILE_PATH,'a')
+            post = open(post_file_path,'a')
             post.write("\n\n\n")
             post.write( append_string )
             post.close()
