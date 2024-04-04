@@ -34,6 +34,7 @@ source bin/activate
 pip3 install -r requirements.txt
 pip3 install WTForms==2.3.3
 pip3 install Werkzeug==2.2.2
+pip3 install lxml # for downloader_probe.py
 ```
 
 **Install Dependencies**
@@ -42,6 +43,7 @@ pip3 install Werkzeug==2.2.2
 - ffmpeg (to extract audio from video)
 - yt-dlp (to download videos from YouTube)
 - 7z (to zip and encrypt downloaded files, in case the download link does not use HTTPS)
+- curl # for downloader_probe.py
 
 **Edit configuration.py**
 
