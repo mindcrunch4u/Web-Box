@@ -24,7 +24,7 @@ Other than a message box, this project also offers something like [Y2mate.com](h
 
 ![Using the downloader](https://github.com/mindcrunch4u/Web-Box/blob/master/about/using-the-downloader.gif)
 
-## Instructions
+## Setting up the server
 
 **Clone and Prepare the Environment**
 ```
@@ -60,4 +60,50 @@ default_config.ytdl_zip_file = False
 
 ```
 python3 capsule.py
+```
+
+## Nginx Configuration
+
+### Providing access to Web-Box
+
+**Start the Web-Box (capsule) server**
+
+```
+nohup python capsule.py 2>&1 >> capsule_log.txt &
+```
+
+**Configure Nginx to pass requests to the server**
+
+Assume you have configured the `default_config.web_path` to `086532dd-a7da-4fdf-9d27-ab31131da975`:
+
+```
+location /086532dd-a7da-4fdf-9d27-ab31131da975
+{
+        proxy_pass http://127.0.0.1:8077/086532dd-a7da-4fdf-9d27-ab31131da975;
+}
+```
+
+Using the `web_path` option allows you to serve multiple apps under one Nginx server.
+
+### Providing access to Storage
+
+**Start the python http server**
+
+The same can be achived using Nginx's `autoindex`. Assume your `default_config.storage_path` is set to `./default_storage/`:
+
+```
+cd ./default_storage
+nohup python -m http.server 5005 --bind 127.0.0.1 2>&1 >> fileserver_log.txt &
+```
+
+**Configure Nginx to pass requests to the http server**
+
+Assume the path is `c6602910-67cf-43f2-a47b-19e040f20e1e`:
+
+```
+location /c6602910-67cf-43f2-a47b-19e040f20e1e/
+{
+        charset UTF-8;
+        proxy_pass http://127.0.0.1:5005/;
+}
 ```
