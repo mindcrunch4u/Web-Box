@@ -51,6 +51,8 @@
 </script>
 <div class="outerwrap">
 	<form method="POST" action="/{{html_web_path}}">
+        <p class="short"> {{ form.password.label }} </p>
+        {{ form.password(size=20) }}
 		<div> {{ form.content(cols="55", rows="5") }} </div>
 		<p class="short"> {{ form.post_id.label }} {{ form.post_id() }} </p>
 		<br/>
