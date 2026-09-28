@@ -15,10 +15,8 @@ Other than a message box, this project also offers something like [Y2mate.com](h
 ### Mode: Downloader
 
 **Start The Servers**
-- One for file access, such as Nginx's `autoindex`.
-- Another for handling download requests.
-
-![Starting the servers](https://github.com/mindcrunch4u/Web-Box/blob/master/about/starting-server.gif)
+- One for file access, such as Nginx's `autoindex`, or using Python `python -m http.server`
+- Start capsule to handle download requests: `python capsule.py`.
 
 **Using the Downloader**
 
